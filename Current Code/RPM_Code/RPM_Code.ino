@@ -53,8 +53,11 @@ void loop() {
 
     float rpm = changes * (1000 / updateTime) / (POLE_COUNT * HALL_COUNT) * 60.0;
 
-    Serial.print("RPM: ");
-    Serial.println(rpm);
+    // Serial.print("RPM: ");
+    // Serial.println(rpm);
+    Serial.print(rpm);
+    Serial.print(",");
+    Serial.println(lastState);
 
     lastTime = now;
   }
