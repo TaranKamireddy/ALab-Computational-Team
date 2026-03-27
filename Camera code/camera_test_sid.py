@@ -23,8 +23,6 @@ Focus metrics (FFT removed for performance):
 
 Controls during normal operation:
   [SPACE] — Snapshot and score current frame
-  [M]     — Cycle ROI mode: Full Frame -> Center Crop -> Drawn ROI
-  [R]     — Re-draw ROI (Draw mode only)
   [C]     — Re-run calibration from scratch
   [Q]     — Quit
 
@@ -49,7 +47,6 @@ FRAME_WIDTH       = 2592            # MD500A native resolution
 FRAME_HEIGHT      = 1944
 
 SCORE_SCALE       = 0.25            # Fraction of native res used for scoring math
-CENTER_CROP_FRAC  = 0.4             # Center crop = 40% of frame dimensions
 
 # Pre-blur kernel size — must be odd. 5 works well for the MD500A sensor noise
 # floor. Increase to 7 if random-pixel frames still score unexpectedly high.
@@ -244,7 +241,7 @@ class FocusScorer:
 # CALIBRATION WIZARD (interactive, runs in main thread)
 # ==============================================================================
 
-def run_calibration_wizard(cap, roi_mgr, scorer: FocusScorer, disp_scale: float):
+def run_calibration_wizard(cap, scorer: FocusScorer, disp_scale: float):
     """
     Guides the user through capturing unfocused and focused anchor snapshots.
 
@@ -293,8 +290,7 @@ def run_calibration_wizard(cap, roi_mgr, scorer: FocusScorer, disp_scale: float)
                 return []   # Abort calibration
 
             elif key == ord(' '):
-                roi   = roi_mgr.extract(frame)
-                small = cv2.resize(roi, (0, 0), fx=SCORE_SCALE, fy=SCORE_SCALE,
+                small = cv2.resize(frame, (0, 0), fx=SCORE_SCALE, fy=SCORE_SCALE,
                                    interpolation=cv2.INTER_AREA)
                 gray  = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
                 raw   = compute_raw_metrics(gray)
@@ -333,70 +329,6 @@ def run_calibration_wizard(cap, roi_mgr, scorer: FocusScorer, disp_scale: float)
 
 
 # ==============================================================================
-# ROI MANAGER
-# ==============================================================================
-
-class ROIManager:
-    MODES       = ["full", "center", "draw"]
-    MODE_LABELS = {"full": "Full Frame", "center": "Center Crop", "draw": "Drawn ROI"}
-
-    def __init__(self):
-        self.mode_idx  = 0
-        self.drawn_roi = None
-
-    @property
-    def mode(self):
-        return self.MODES[self.mode_idx]
-
-    def cycle_mode(self):
-        self.mode_idx = (self.mode_idx + 1) % len(self.MODES)
-
-    def extract(self, frame: np.ndarray) -> np.ndarray:
-        h, w = frame.shape[:2]
-        if self.mode == "full":
-            return frame
-        elif self.mode == "center":
-            ch, cw = int(h * CENTER_CROP_FRAC), int(w * CENTER_CROP_FRAC)
-            y0, x0 = (h - ch) // 2, (w - cw) // 2
-            return frame[y0:y0+ch, x0:x0+cw]
-        elif self.mode == "draw":
-            if self.drawn_roi is None:
-                return frame
-            x, y, rw, rh = self.drawn_roi
-            x  = max(0, min(x,  w - 1))
-            y  = max(0, min(y,  h - 1))
-            rw = max(1, min(rw, w - x))
-            rh = max(1, min(rh, h - y))
-            return frame[y:y+rh, x:x+rw]
-
-    def prompt_draw(self, frame: np.ndarray):
-        print("[ROI] Drag to select region, press ENTER or SPACE to confirm.")
-        roi = cv2.selectROI("Draw ROI — ENTER to confirm", frame,
-                            fromCenter=False, showCrosshair=True)
-        cv2.destroyWindow("Draw ROI — ENTER to confirm")
-        if roi[2] > 0 and roi[3] > 0:
-            self.drawn_roi = roi
-            print(f"[ROI] Saved: {roi}")
-        else:
-            print("[ROI] No valid selection, keeping previous.")
-
-    def draw_overlay(self, display: np.ndarray, scale: float):
-        h, w = display.shape[:2]
-        if self.mode == "full":
-            cv2.rectangle(display, (0, 0), (w-1, h-1), (0, 255, 0), 2)
-        elif self.mode == "center":
-            ch, cw = int(h * CENTER_CROP_FRAC), int(w * CENTER_CROP_FRAC)
-            y0, x0 = (h - ch) // 2, (w - cw) // 2
-            cv2.rectangle(display, (x0, y0), (x0+cw, y0+ch), (0, 255, 255), 2)
-        elif self.mode == "draw" and self.drawn_roi:
-            x, y, rw, rh = self.drawn_roi
-            cv2.rectangle(display,
-                          (int(x*scale), int(y*scale)),
-                          (int((x+rw)*scale), int((y+rh)*scale)),
-                          (255, 100, 0), 2)
-
-
-# ==============================================================================
 # SHARED SCORE RESULT (thread-safe)
 # ==============================================================================
 
@@ -424,18 +356,17 @@ class ScoreResult:
 # HUD OVERLAY
 # ==============================================================================
 
-def draw_hud(display: np.ndarray, result: ScoreResult,
-             roi_label: str, fps: float, calibrated: bool):
+def draw_hud(display: np.ndarray, result: ScoreResult, fps: float, calibrated: bool):
     """
     Draw a simplified overlay showing:
       - Calibration status
       - Composite focus score as a number + colour-coded bar
-      - FPS and ROI mode
+      - FPS
       - Key hint footer
     """
     scores  = result.read()
     pending = result.pending
-    h, w    = display.shape[:2]
+    h, _    = display.shape[:2]
 
     # Semi-transparent dark panel — smaller than before since no metric bars
     panel_w, panel_h = 310, 115
@@ -477,10 +408,10 @@ def draw_hud(display: np.ndarray, result: ScoreResult,
         cv2.rectangle(display, (bx, by), (bx + int(composite * bw), by + bh), colour, -1)
 
     # Footer
-    cv2.putText(display, f"ROI: {roi_label}   FPS: {fps:.1f}", (20, 105),
+    cv2.putText(display, f"FPS: {fps:.1f}", (20, 105),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.38, (160, 160, 160), 1)
     cv2.putText(display,
-                "[SPACE] Score  [M] ROI  [R] Draw  [C] Recalibrate  [Q] Quit",
+                "[SPACE] Score  [C] Recalibrate  [Q] Quit",
                 (10, h - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (140, 140, 140), 1)
 
 
@@ -488,14 +419,12 @@ def draw_hud(display: np.ndarray, result: ScoreResult,
 # BACKGROUND SCORING THREAD
 # ==============================================================================
 
-def run_score(frame: np.ndarray, roi_mgr: ROIManager,
-              scorer: FocusScorer, result: ScoreResult):
+def run_score(frame: np.ndarray, scorer: FocusScorer, result: ScoreResult):
     """
     Runs in a daemon thread on SPACE press.
-    Extracts ROI, downscales, converts to gray, scores, writes result.
+    Downscales, converts to gray, scores, writes result.
     """
-    roi   = roi_mgr.extract(frame)
-    small = cv2.resize(roi, (0, 0), fx=SCORE_SCALE, fy=SCORE_SCALE,
+    small = cv2.resize(frame, (0, 0), fx=SCORE_SCALE, fy=SCORE_SCALE,
                        interpolation=cv2.INTER_AREA)
     gray  = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
 
@@ -531,15 +460,13 @@ def main():
     print(f"  Camera opened at {actual_w} x {actual_h}")
 
     scorer     = FocusScorer()
-    roi_mgr    = ROIManager()
     result     = ScoreResult()
     disp_scale = min(1.0, 1280 / actual_w)
 
     # Run calibration wizard immediately on startup
-    run_calibration_wizard(cap, roi_mgr, scorer, disp_scale)
+    run_calibration_wizard(cap, scorer, disp_scale)
 
-    print("  SPACE = score  |  M = ROI  |  R = draw ROI  |  "
-          "C = recalibrate  |  Q = quit\n")
+    print("  SPACE = score  |  C = recalibrate  |  Q = quit\n")
 
     prev_time = time.time()
     fps       = 0.0
@@ -561,9 +488,7 @@ def main():
         else:
             display = frame.copy()
 
-        roi_mgr.draw_overlay(display, disp_scale)
-        draw_hud(display, result, ROIManager.MODE_LABELS[roi_mgr.mode],
-                 fps, scorer.calib.ready)
+        draw_hud(display, result, fps, scorer.calib.ready)
 
         cv2.imshow("Autofocus Scorer — MD500A", display)
         key = cv2.waitKey(1) & 0xFF
@@ -578,7 +503,7 @@ def main():
                 snapshot = frame.copy()
                 t = threading.Thread(
                     target=run_score,
-                    args=(snapshot, roi_mgr, scorer, result),
+                    args=(snapshot, scorer, result),
                     daemon=True
                 )
                 t.start()
@@ -587,19 +512,7 @@ def main():
 
         elif key == ord('c'):
             result.pending = False
-            run_calibration_wizard(cap, roi_mgr, scorer, disp_scale)
-
-        elif key == ord('m'):
-            roi_mgr.cycle_mode()
-            print(f"[ROI] Mode: {ROIManager.MODE_LABELS[roi_mgr.mode]}")
-            if roi_mgr.mode == "draw" and roi_mgr.drawn_roi is None:
-                roi_mgr.prompt_draw(frame)
-
-        elif key == ord('r'):
-            if roi_mgr.mode == "draw":
-                roi_mgr.prompt_draw(frame)
-            else:
-                print("[ROI] Switch to Draw mode with [M] first.")
+            run_calibration_wizard(cap, scorer, disp_scale)
 
     cap.release()
     cv2.destroyAllWindows()
