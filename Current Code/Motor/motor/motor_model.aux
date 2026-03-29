@@ -1,0 +1,54 @@
+\relax 
+\@writefile{toc}{\contentsline {section}{\numberline {1}Equation of Motion}{1}{}\protected@file@percent }
+\newlabel{eq:ode}{{1}{1}{}{equation.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Torque Input (PWM Pulse)}{1}{}\protected@file@percent }
+\newlabel{eq:torque}{{2}{1}{}{equation.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Laplace-Domain Solution for $\omega $}{1}{}\protected@file@percent }
+\newlabel{eq:Omega_s}{{3}{1}{}{equation.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Time-Domain Solution for $\omega (t)$}{1}{}\protected@file@percent }
+\newlabel{eq:omega_t}{{4}{1}{}{equation.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Angular Position $\theta (t)$ by Integration}{2}{}\protected@file@percent }
+\newlabel{eq:theta_t}{{5}{2}{}{equation.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Hall Sensor Observation Model}{2}{}\protected@file@percent }
+\newlabel{eq:hall_hard}{{6}{2}{}{equation.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Hard indicator — pole-tracking implementation}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Soft (differentiable) approximation}{3}{}\protected@file@percent }
+\newlabel{eq:hall_soft}{{8}{3}{}{equation.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Parameter Identification Problem}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Parameters}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Data alignment}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Loss Functions Evaluated}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Binary MSE (\texttt  {score})}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Transition-timestamp MSE (\texttt  {theta\_function})}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Transition-interval MSE (\texttt  {interval\_loss})}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Binary cross-entropy with soft Hall window (\texttt  {bce\_loss})}{4}{}\protected@file@percent }
+\newlabel{eq:bce}{{12}{4}{}{equation.12}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Optimisation Methods Evaluated}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}L-BFGS-B (gradient-based)}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}CMA-ES (\texttt  {cmaes} library)}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Differential Evolution (\texttt  {scipy.optimize.differential\_evolution})}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.4}Sharpness annealing (forward: $s=2\to 50$)}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.5}Sharpness annealing (reverse: $s=5\to 1$)}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.6}Optimal sharpness analysis}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.7}Adaptive sharpness: $s = 1/k$}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.8}3-sensor BCE optimisation (\texttt  {bce\_loss\_3sensor})}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.9}Hybrid approach: 3-sensor $\omega _{ss}$ + single-sensor BCE}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.10}Sharpness as a free parameter}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.11}Transient-only optimisation}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.12}Omega\_ss soft penalty (\texttt  {\_bce\_omega\_penalty})}{7}{}\protected@file@percent }
+\newlabel{eq:penalty}{{14}{7}{}{equation.14}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10}Analytical Parameter Estimation Pipeline}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}Data alignment bug and fix}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}Coast-down $c_I$ estimation}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3}3-sensor quantization floor at high speed}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4}Analytical estimation pipeline}{9}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5}Phase drift from $\omega _{ss}$ error}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.6}Lower-PWM recommendation for reliable identification}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11}Computational Implementation}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1}Vectorised \texttt  {score} and \texttt  {pole=0} fix}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2}$\phi $-decomposition: vectorising over $\theta _0$}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3}Hybrid process$+$thread parallelism}{11}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4}Coarse-to-fine 2D grid}{11}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.5}\texttt  {P\_SCALE} consistency}{11}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {12}Key Findings and Open Issues}{11}{}\protected@file@percent }
+\gdef \@abspage@last{11}
